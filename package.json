@@ -1,0 +1,15 @@
+{
+  "name": "politiplot-autoposter",
+  "version": "3.0.0",
+  "description": "Auto-poster for politiplot.com — Claude AI version",
+  "main": "autoposter.js",
+  "scripts": {
+    "start": "node autoposter.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "rss-parser": "^3.13.0"
+  }
+}
