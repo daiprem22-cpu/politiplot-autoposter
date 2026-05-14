@@ -450,8 +450,12 @@ function scheduleNext() {
   const nextTime = new Date(Date.now() + delay);
   console.log(`⏭️  Next post scheduled: ${nextTime.toLocaleString()}`);
   setTimeout(() => {
-    runCycle();
-    scheduleNext();
+    async function start() {
+  await runCycle();
+  scheduleNext();
+}
+
+start();
   }, delay);
 }
 
