@@ -253,7 +253,31 @@ function buildNewsArticleSchema(content, postUrl, imageUrl) {
   return JSON.stringify(schema);
 }
 
-async function getCategoryIdByName(name, auth) {
+function convertToGutenbergBlocks(html) {
+  let result = html;
+
+  // Konverto <h2> ne Gutenberg heading block
+  result = result.replace(/<h2>(.*?)<\/h2>/gi, (match, content) => {
+    return `\n<!-- wp:heading -->\n<h2 class="wp-block-heading">${content}</h2>\n<!-- /wp:heading -->\n`;
+  });
+
+  // Konverto <p class="ai-note"> ne Gutenberg paragraph block
+  result = result.replace(/<p class="ai-note">([\s\S]*?)<\/p>/gi, (match, content) => {
+    return `\n<!-- wp:paragraph {"className":"ai-note"} -->\n<p class="ai-note">${content}</p>\n<!-- /wp:paragraph -->\n`;
+  });
+
+  // Konverto <p> te tjera ne Gutenberg paragraph block
+  result = result.replace(/<p>([\s\S]*?)<\/p>/gi, (match, content) => {
+    return `\n<!-- wp:paragraph -->\n<p>${content}</p>\n<!-- /wp:paragraph -->\n`;
+  });
+
+  // Konverto <script> schema ne HTML block
+  result = result.replace(/(<script type="application\/ld\+json">[\s\S]*?<\/script>)/gi, (match) => {
+    return `\n<!-- wp:html -->\n${match}\n<!-- /wp:html -->\n`;
+  });
+
+  return result.trim();
+}
   try {
     const res = await axios.get(`${WP_URL}/wp-json/wp/v2/categories?search=${encodeURIComponent(name)}&per_page=10`, { headers: { Authorization: `Basic ${auth}` } });
     const found = res.data.find(c => c.name.toLowerCase() === name.toLowerCase());
@@ -403,7 +427,8 @@ async function runCycle() {
 
     const postUrl = `${WP_URL}/${content.slug}/`;
     const schema  = buildNewsArticleSchema(content, postUrl, imageData.url);
-    const articleWithSchema = content.article_html + `\n<!-- NewsArticle Schema -->\n<script type="application/ld+json">${schema}<\/script>`;
+    const rawContent = content.article_html + `\n<script type="application/ld+json">${schema}<\/script>`;
+    const articleWithSchema = convertToGutenbergBlocks(rawContent);
 
     const postData = {
       title:          content.title,
