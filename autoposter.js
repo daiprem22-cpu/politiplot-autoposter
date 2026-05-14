@@ -129,7 +129,6 @@ CONTENT RULES:
 - Cite the source naturally: e.g. "As reported by ${article.source}," or "According to ${article.source},"
 - Add 1-2 sentences of original analysis or context per section — this is what makes the article unique
 - End with a brief "What This Means" closing paragraph explaining implications for readers
-- Add this exact disclaimer as the last line of article_html: <p class="ai-note"><em>This article was produced with AI assistance and reviewed by the Politiplot editorial team.</em></p>
 
 HTML FORMAT:
 - Paragraphs: <p>text</p>
@@ -261,10 +260,6 @@ function convertToGutenbergBlocks(html) {
     return `\n<!-- wp:heading -->\n<h2 class="wp-block-heading">${content}</h2>\n<!-- /wp:heading -->\n`;
   });
 
-  // Konverto <p class="ai-note"> ne Gutenberg paragraph block
-  result = result.replace(/<p class="ai-note">([\s\S]*?)<\/p>/gi, (match, content) => {
-    return `\n<!-- wp:paragraph {"className":"ai-note"} -->\n<p class="ai-note">${content}</p>\n<!-- /wp:paragraph -->\n`;
-  });
 
   // Konverto <p> te tjera ne Gutenberg paragraph block
   result = result.replace(/<p>([\s\S]*?)<\/p>/gi, (match, content) => {
