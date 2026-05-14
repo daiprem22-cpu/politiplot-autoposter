@@ -450,12 +450,8 @@ function scheduleNext() {
   const nextTime = new Date(Date.now() + delay);
   console.log(`⏭️  Next post scheduled: ${nextTime.toLocaleString()}`);
   setTimeout(() => {
-    async function start() {
-  await runCycle();
-  scheduleNext();
-}
-
-start();
+    runCycle();
+    scheduleNext();
   }, delay);
 }
 
@@ -463,5 +459,9 @@ console.log('\n🚀 PolitiPlot Auto-Poster v4.0 started!');
 console.log(`🌐 WordPress: ${WP_URL}`);
 console.log(`⏱️  Posting every ~${INTERVAL_HOURS} hours (randomized +0-45min)\n`);
 
-runCycle();
-scheduleNext();
+async function start() {
+  await runCycle();
+  scheduleNext();
+}
+
+start();
