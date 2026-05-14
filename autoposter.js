@@ -278,6 +278,8 @@ function convertToGutenbergBlocks(html) {
 
   return result.trim();
 }
+
+async function getCategoryIdByName(name, auth) {
   try {
     const res = await axios.get(`${WP_URL}/wp-json/wp/v2/categories?search=${encodeURIComponent(name)}&per_page=10`, { headers: { Authorization: `Basic ${auth}` } });
     const found = res.data.find(c => c.name.toLowerCase() === name.toLowerCase());
