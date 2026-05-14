@@ -147,7 +147,11 @@ SEO (follow exactly):
 TAGS: 5-7 specific tags (people, places, topics in article)
 
 Return ONLY raw valid JSON, no markdown, no backticks:
-{"title":"...","slug":"...","meta_description":"...","focus_keyword":"...","article_html":"...","tags":["..."],"category":"${cat.name}"}
+{"title":"...","slug":"...","meta_description":"...","focus_keyword":"...","article_html":"...","tags":["..."],"category":"${cat.name}","persons":[{"name":"Full Name","jobTitle":"Their Role"}],"places":["City","Country"],"events":[{"name":"Event Name","startDate":"YYYY-MM-DD","location":"Place"}]}
+
+- persons: real people mentioned in the article with their job title (max 5)
+- places: real places mentioned (max 5, city or country names only)
+- events: only if a specific named event is discussed (summit, election, trial etc), otherwise empty array []
 
 TOPIC:
 Title: ${article.title}
@@ -173,7 +177,38 @@ Source: ${article.source}`;
 
 function buildNewsArticleSchema(content, postUrl, imageUrl) {
   const now = new Date().toISOString();
-  return JSON.stringify({
+
+  // Build "about" array from persons and events
+  const about = [];
+  if (content.persons && content.persons.length > 0) {
+    content.persons.forEach(p => {
+      about.push({
+        "@type": "Person",
+        "name": p.name,
+        ...(p.jobTitle ? { "jobTitle": p.jobTitle } : {}),
+      });
+    });
+  }
+  if (content.events && content.events.length > 0) {
+    content.events.forEach(e => {
+      about.push({
+        "@type": "Event",
+        "name": e.name,
+        ...(e.startDate ? { "startDate": e.startDate } : {}),
+        ...(e.location ? { "location": { "@type": "Place", "name": e.location } } : {}),
+      });
+    });
+  }
+
+  // Build "mentions" array from places
+  const mentions = [];
+  if (content.places && content.places.length > 0) {
+    content.places.forEach(place => {
+      mentions.push({ "@type": "Place", "name": place });
+    });
+  }
+
+  const schema = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     "headline": content.title,
@@ -183,16 +218,18 @@ function buildNewsArticleSchema(content, postUrl, imageUrl) {
     "dateModified": now,
     "author": {
       "@type": "Organization",
-      "name": "Politiplot Editorial Team",
-      "url": "https://politiplot.com/about-us/"
+      "name": "PolitiPlot",
+      "url": "https://politiplot.com"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "Politiplot",
+      "name": "PolitiPlot",
       "url": "https://politiplot.com",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://politiplot.com/wp-content/uploads/logo.png"
+        "url": "https://politiplot.com/wp-content/uploads/2026/04/cropped-icon.jpeg",
+        "width": 512,
+        "height": 512
       }
     },
     "mainEntityOfPage": {
@@ -203,11 +240,17 @@ function buildNewsArticleSchema(content, postUrl, imageUrl) {
       "@type": "ImageObject",
       "url": imageUrl,
       "width": 1200,
-      "height": 630
+      "height": 630,
+      "caption": content.title
     } : undefined,
     "articleSection": content.category,
-    "inLanguage": "en-US"
-  });
+    "inLanguage": "en-US",
+  };
+
+  if (about.length > 0) schema.about = about;
+  if (mentions.length > 0) schema.mentions = mentions;
+
+  return JSON.stringify(schema);
 }
 
 async function getCategoryIdByName(name, auth) {
